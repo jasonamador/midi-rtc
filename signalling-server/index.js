@@ -14,6 +14,7 @@ const WebSocket = require('ws')
 const wss = new WebSocket.Server({server})
 
 wss.on('connection', connection => {
+  console.log('connection')
   if (users.length >= 10) {
     connection.send(JSON.stringify({type: 'error', message: 'Room is full'}))
     connection.close()
@@ -21,9 +22,14 @@ wss.on('connection', connection => {
   const user = users.add(randomName(), connection)
   const handleMessage = makeMessageHandler(user, users)
 
-  users.getConnections().forEach(c => {
-    c.send(JSON.stringify({ type: 'userUpdate', users: users.getConnected() }))
-  })
+  const connected = users.getConnected()
+  for (const recipient of connected) {
+    const update = {
+      mutation: 'updateUsers',
+      users: users.getConnectedPublic().map(u => ({ ...u, me: u.name === recipient.name}))
+    }
+    recipient.connection.send(JSON.stringify(update))
+  }
 
   connection.on('message', handleMessage)
 

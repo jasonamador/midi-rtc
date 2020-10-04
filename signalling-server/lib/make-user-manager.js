@@ -16,7 +16,7 @@ module.exports = function makeUserManager (makeId) {
   const users = []
 
   function removeByProperty (propName, propValue) {
-    const user = users.find(u => u.getProp(propName)=== propValue)
+    const user = users.find(u => u[propName] === propValue)
     if (!user) {
       throw new Error(`Cannot remove user with ${propName}: ${propValue}, does not exist`)
     }
@@ -26,7 +26,8 @@ module.exports = function makeUserManager (makeId) {
   return Object.freeze({
     getByName: name => users.find(u => u.name === name),
     getById: id => users.find(u => u.id === id),
-    getConnected: () => users.filter(u => u.isConnected()).map(u => u.public),
+    getConnectedPublic: () => users.filter(u => u.isConnected()).map(u => u.public),
+    getConnected: () => users.filter(u => u.isConnected()),
     getConnections: () => users.filter(u => u.isConnected()).map(u => u.connection),
     get length () { return users.length },
     add: (username, connection) => {

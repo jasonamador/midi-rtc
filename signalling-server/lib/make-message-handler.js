@@ -2,7 +2,7 @@
 
 module.exports = function makeMessageHandler(user, users) {
   function sendError(message) {
-    user.connection.send(JSON.stringify({ type: 'error', message }))
+    user.connection.send(JSON.stringify({ action: 'error', message }))
   }
 
   function sendTo(recipient, message) {
@@ -24,7 +24,7 @@ module.exports = function makeMessageHandler(user, users) {
     if (!recipient) {
       return sendError(`Cannot send offer, user ${recipient} does not exist.`)
     }
-    return message.recipient
+    return recipient
   }
 
   function sendToAll(message) {
@@ -35,38 +35,47 @@ module.exports = function makeMessageHandler(user, users) {
     }
   }
 
+  function sendUserUpdate () {
+    const connected = users.getConnected()
+    for (const recipient of connected) {
+      const update = {
+        mutation: 'updateUsers',
+        users: users.getConnectedPublic().map(u => ({ ...u, me: u.name === recipient.name}))
+      }
+      recipient.connection.send(JSON.stringify(update))
+    }
+  }
+
   const handlers = Object.freeze({
-    nameChange: message => {
+    changeName: message => {
       if (!message.name) {
         return sendError('Name change message must include a name')
       }
       if (users.getByName(message.name)) {
-        return sendError(`'${message.name} already exists`)
+        return sendError(`Name '${message.name}' already exists`)
       }
       try {
         user.name = message.name
       } catch (err) {
         return sendError(err.message)
       }
-      const nameUpdate = {
-        type: 'userUpdate',
-        users: users.getConnected()
-      }
-      sendToAll(nameUpdate)
+      sendUserUpdate()
     },
     offer: message => {
       const recipient = validateRecipient(message)
-      const offer = {
-        type: 'offer',
-        sender: user.name,
-        offer: message.offer
+      if (recipient) {
+        const offer = {
+          action: 'offer',
+          sender: user.name,
+          offer: message.offer
+        }
+        sendTo(recipient, offer)
       }
-      sendTo(recipient, offer)
     },
     answer: message => {
       const recipient = validateRecipient(message)
       const answer = {
-        type: 'answer',
+        mutation: 'answer',
         sender: user.name,
         answer: message.answer
       }
@@ -75,7 +84,7 @@ module.exports = function makeMessageHandler(user, users) {
     candidate: message => {
       const recipient = validateRecipient(message)
       const candidate = {
-        type: 'candidate',
+        mutation: 'candidate',
         sender: user.name,
         candidate: message.candidate
       }
@@ -84,6 +93,7 @@ module.exports = function makeMessageHandler(user, users) {
   })
 
   return function messageHandler(rawMessage) {
+    console.log(rawMessage)
     let data
     try {
       data = JSON.parse(rawMessage)
@@ -92,9 +102,10 @@ module.exports = function makeMessageHandler(user, users) {
     }
 
     const message = data
-    const handler = handlers[message.type]
+    const handler = handlers[message.action]
     if (!handler) {
-      connection.send(JSON.stringify({type: 'error', message: `Invalid message type ${message.type}`}))
+      console.log('Invalid message action')
+      user.connection.send(JSON.stringify({type: 'error', message: `Invalid message type ${message.action}`}))
     } else {
       handler(message)
     }
