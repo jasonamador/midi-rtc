@@ -15,7 +15,7 @@ Vue.use(MdList)
 Vue.use(MdTable)
 
 Vue.config.productionTip = false
-Vue.use(VueNativeSock, 'ws://localhost:9000', { store, format: 'json' })
+Vue.use(VueNativeSock, process.env.VUE_APP_SIGNALING_URL, { store, format: 'json' })
 
 new Vue({
   render: h => h(App),

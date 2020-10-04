@@ -47,7 +47,7 @@ wss.on('connection', connection => {
   }))
 })
 
-const port = process.env.PORT || 9000
+const port = process.env.WS_PORT || 9000
 
 server.listen(port, () => {
   console.log(`Listening on ${port}`)
