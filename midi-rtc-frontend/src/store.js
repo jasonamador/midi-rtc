@@ -38,8 +38,8 @@ export default new Vuex.Store({
     updateConnection (state, connection) {
       state.rtc.connection = connection
     },
-    setConnectedTo(state, name) {
-      state.connectedTo = name
+    setConnectedTo(state, user) {
+      state.connectedTo = user
     },
     answer (state, message) {
       state.connectedTo = message.sender

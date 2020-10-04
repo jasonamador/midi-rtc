@@ -1,13 +1,18 @@
 <template>
   <div class="home">
     <h1>MIDI RTC</h1>
-    <div class="md-layout">
-      <div class="md-layout-item md-size-30">
+    <div class="md-layout md-gutter md-alignment-center-center">
+      <div class="md-layout-item md-size-25">
         <lobby></lobby>
       </div>
       <div class="md-layout-item md-size-70">
         <room></room>
       </div>
+      <div class="md-layout-item md-size-95">
+        <midi></midi>
+      </div>
+    </div>
+    <div class="md-layout md-gutter md-alignment-center-center">
     </div>
   </div>
 </template>
@@ -15,15 +20,17 @@
 
 import Lobby from './Lobby'
 import Room from './Room'
+import Midi from './Midi'
 import { mapActions } from 'vuex'
 export default {
   name: 'Home',
   components: {
     Lobby,
+    Midi,
     Room
   },
   methods: {
-    ...mapActions(['connectRTC'])
+    ...mapActions(['connectRTC']),
   },
   mounted() {
     this.connectRTC()
@@ -43,6 +50,9 @@ ul {
 li {
   display: inline-block;
   margin: 0 10px;
+}
+.md-layout-item {
+  margin-bottom: 20px;
 }
 a {
   color: #42b983;

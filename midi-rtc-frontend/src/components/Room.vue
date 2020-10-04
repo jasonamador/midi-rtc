@@ -1,6 +1,11 @@
 <template>
   <div class="room">
-    <md-card>
+    <md-card v-if="!connectedTo">
+      <md-card-header>
+        Not Connected Yet
+      </md-card-header>
+    </md-card>
+    <md-card v-if="connectedTo">
       <md-card-header>
         <div class="md-title">Chat with {{connectedTo}}</div>
       </md-card-header>
@@ -16,7 +21,6 @@
         </md-field>
         <md-button @click="sendMessage">Send</md-button>
       </md-card-content>
-
     </md-card>
   </div>
 </template>
