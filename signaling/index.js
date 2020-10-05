@@ -1,50 +1,38 @@
 'use strict'
 
+// external dependencies
 require('dotenv').config()
+const WebSocket = require('ws')
 const http = require('http')
 const express = require('express')
+const randomName = require('./lib/random-name')
+const makeId = require('uuid').v4
+
+// factories
+const buildMakeSession = require('./lib/entities/sessions')
+const makeSessionManager = require('./lib/controllers/make-session-manager')
+const makeMessageHandler = require('./lib/controllers/make-message-handler')
+
+// bootstrap server
 const app = express()
 const server = http.createServer(app)
-const makeId = require('uuid').v4
-const users = require('./lib/make-user-manager')(makeId)
-const makeMessageHandler = require('./lib/make-message-handler')
-const randomName = require('./lib/random-name')
+const wss = new WebSocket.Server({
+  server
+})
 
-const WebSocket = require('ws')
-const wss = new WebSocket.Server({server})
+// build handlers
+const makeSession = buildMakeSession(makeId)
+const sessionManager = makeSessionManager(makeSession)
 
 wss.on('connection', connection => {
   console.log('connection')
-  if (users.length >= 10) {
-    connection.send(JSON.stringify({type: 'error', message: 'Room is full'}))
-    connection.close()
+  try {
+    const session = sessionManager.add(randomName(), connection)
+    const handleMessage = makeMessageHandler(session, sessionManager)
+    connection.on('message', handleMessage)
+  } catch (e) {
+    console.error(e)
   }
-  const user = users.add(randomName(), connection)
-  const handleMessage = makeMessageHandler(user, users)
-
-  const connected = users.getConnected()
-  for (const recipient of connected) {
-    const update = {
-      mutation: 'updateUsers',
-      users: users.getConnectedPublic().map(u => ({ ...u, me: u.name === recipient.name}))
-    }
-    recipient.connection.send(JSON.stringify(update))
-  }
-
-  connection.on('message', handleMessage)
-
-  connection.on('close', () => {
-    try {
-      users.removeByConnection(connection)
-    } catch (e) {
-      console.error(e)
-    }
-  })
-
-  connection.send(JSON.stringify({
-    type: 'connect',
-    message: 'You are connected!'
-  }))
 })
 
 const port = process.env.PORT || 9000
@@ -52,4 +40,3 @@ const port = process.env.PORT || 9000
 server.listen(port, () => {
   console.log(`Listening on ${port}`)
 })
-
