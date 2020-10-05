@@ -19,42 +19,33 @@ export default new Vuex.Store({
     currentMessages: []
   },
   mutations: {
-    SOCKET_ONOPEN (state) {
-      state.socket.open = true
-    },
-    SOCKET_ONCLOSE (state) {
-      state.open = false
-    },
-    SOCKET_ONMESSAGE (state, message) {
-      console.log(message)
-    },
-    updateUsers (state, message) {
-      state.me = message.users.find(u => u.me)
-      state.users = message.users
-    },
-    updateChannel (state, channel) {
-      state.rtc.channel = channel
-    },
-    updateConnection (state, connection) {
-      state.rtc.connection = connection
-    },
-    setConnectedTo(state, user) {
-      state.connectedTo = user
-    },
-    answer (state, message) {
-      state.connectedTo = message.sender
-      state.rtc.connection.setRemoteDescription(new RTCSessionDescription(message.answer))
-    },
-    candidate (state, message) {
-      state.rtc.connection.addIceCandidate(new RTCIceCandidate(message.candidate));
-    },
-    addMessage (state, message) {
-      if (!Array.isArray(state.messages[state.connectedTo])){
-        state.messages[state.connectedTo] = []
-      }
-      state.messages[state.connectedTo].push(message)
-      state.currentMessages = [...state.messages[state.connectedTo]]
-    }
+    // updateUsers (state, message) {
+    //   state.me = message.users.find(u => u.me)
+    //   state.users = message.users
+    // },
+    // updateChannel (state, channel) {
+    //   state.rtc.channel = channel
+    // },
+    // updateConnection (state, connection) {
+    //   state.rtc.connection = connection
+    // },
+    // setConnectedTo(state, user) {
+    //   state.connectedTo = user
+    // },
+    // answer (state, message) {
+    //   state.connectedTo = message.sender
+    //   state.rtc.connection.setRemoteDescription(new RTCSessionDescription(message.answer))
+    // },
+    // candidate (state, message) {
+    //   state.rtc.connection.addIceCandidate(new RTCIceCandidate(message.candidate));
+    // },
+    // addMessage (state, message) {
+    //   if (!Array.isArray(state.messages[state.connectedTo])){
+    //     state.messages[state.connectedTo] = []
+    //   }
+    //   state.messages[state.connectedTo].push(message)
+    //   state.currentMessages = [...state.messages[state.connectedTo]]
+    // }
   },
   actions: {
     error (context, err) {
@@ -129,6 +120,5 @@ export default new Vuex.Store({
       }
       Vue.prototype.$socket.sendObj(message)
     }
-
   }
 })

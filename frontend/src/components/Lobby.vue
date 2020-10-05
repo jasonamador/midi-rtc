@@ -6,19 +6,19 @@
       </md-card-header>
       <md-card-content>
         <md-list :md-expand-single="true">
-          <md-list-item md-expand v-for="user in users" :key="user.name" v-bind:class="{me: user.me}">
-            <span v-bind:class="{me: user.me}">{{user.name}}</span>
+          <md-list-item md-expand v-for="user in users" :key="user.handle" v-bind:class="{me: user.me}">
+            <span v-bind:class="{me: user.me}">{{user.handle}}</span>
             <div slot="md-expand">
               <div v-if="user.me">
                 <md-field>
                   <label>Change Name</label>
-                  <md-input v-model="newName"></md-input>
-                  <span class="md-error" v-if="nameError">{{nameError}}</span>
+                  <md-input v-model="newHandle"></md-input>
+                  <span class="md-error" v-if="handleError">{{handleError}}</span>
                 </md-field>
-                <md-button @click="changeName()">Submit</md-button>
+                <md-button @click="changeHandle()">Submit</md-button>
               </div>
               <div v-if="!user.me">
-                <md-button @click="sendOffer(user.name)">Connect</md-button>
+                <md-button @click="sendOffer(user)">Connect</md-button>
               </div>
             </div>
           </md-list-item>
@@ -29,32 +29,43 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex'
+// import { mapState, mapActions } from 'vuex'
 
 export default {
   name: 'Lobby',
   data: () => {
     return {
-      newName: '',
-      nameError: ''
+      users: [],
+      me: {},
+      newHandle: '',
+      handleError: ''
     }
   },
   computed: {
-    ...mapState(['me', 'users'])
+    // ...mapState(['me', 'users'])
   },
   mounted () {
+    this.$rtc.$on('updateUsers', users => {
+      this.users = users
+    })
   },
   methods: {
-    ...mapActions(['sendOffer', 'sendChangeName']),
-    changeName() {
-      if (this.users.map(u => u.name).includes(this.newName)) {
-        this.nameError = `Username ${this.newName} is taken`
+    // ...mapActions(['sendOffer', 'sendChangeName']),
+    changeHandle() {
+      if (this.users.map(u => u.handle).includes(this.newHandle)) {
+        this.handleError = `Username ${this.newHandle} is taken`
       } else {
-        this.sendChangeName(this.newName)
+        // this.$rtc.send({
+        //   type: 'changeHandle',
+        //   recipientId: 'server',
+        //   data: this.newHandle
+        // })
         this.newName = ''
         this.nameError = ''
       }
-      
+    },
+    sendOffer(user) {
+      this.$rtc.sendOffer(user.id)
     }
   }
 }

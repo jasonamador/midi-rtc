@@ -5,7 +5,7 @@
         Not Connected Yet
       </md-card-header>
     </md-card>
-    <md-card v-if="connectedTo">
+    <md-card v-if="rtcConnected">
       <md-card-header>
         <div class="md-title">Chat with {{connectedTo}}</div>
       </md-card-header>
@@ -26,7 +26,7 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex'
+// import { mapState, mapActions } from 'vuex'
 
 export default {
   name: 'Room',
@@ -36,12 +36,21 @@ export default {
     }
   },
   computed: {
-    ...mapState(['connectedTo', 'currentMessages']),
+    signalingConnected () {
+      return this.$rtc.signalingConnected
+    },
+    rtcConnected () {
+      return this.$rtc.connected
+    },
+    connectedTo () {
+      return this.$rtc.connectedTo
+    }
   },
   methods: {
-    ...mapActions(['sendRTC']),
+    // ...mapActions(['sendRTC']),
     sendMessage() {
-      this.sendRTC(this.newMessage)
+      // this.sendRTC(this.newMessage)
+      this.$rtc.send(this.newMessage)
       this.newMessage = ''
     }
   }

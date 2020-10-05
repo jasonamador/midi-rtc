@@ -11,6 +11,16 @@
       <div class="md-layout-item md-size-95">
         <midi></midi>
       </div>
+      <md-dialog :md-active.sync="showOffer">
+        <md-dialog-title>Invitation</md-dialog-title>
+        <md-dialog-content>
+          {{offer.sender}} wants to chat
+        </md-dialog-content>
+        <md-dialog-actions>
+          <md-button @click=acceptOffer()>Accept</md-button>
+          <md-button @click=declineOffer()>Decline</md-button>
+        </md-dialog-actions>
+      </md-dialog>
     </div>
     <div class="md-layout md-gutter md-alignment-center-center">
     </div>
@@ -21,7 +31,7 @@
 import Lobby from './Lobby'
 import Room from './Room'
 import Midi from './Midi'
-import { mapActions } from 'vuex'
+// import { mapActions } from 'vuex'
 export default {
   name: 'Home',
   components: {
@@ -29,11 +39,28 @@ export default {
     Midi,
     Room
   },
+  data: () => {
+    return {
+      showOffer: false,
+      offer: {}
+    }
+  },
+  computed: {
+  },
   methods: {
-    ...mapActions(['connectRTC']),
+    // ...mapActions(['connectRTC']),
+    notifyOffer(message) {
+      this.showOffer = true
+      this.offer = message
+    },
+    declineOffer() {
+      this.showOffer = false
+    },
+    acceptOffer() {
+      this.showOffer = false
+    },
   },
   mounted() {
-    this.connectRTC()
   }
 }
 </script>
