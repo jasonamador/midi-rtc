@@ -6,15 +6,12 @@ module.exports = function makeMessageHandler(session, sessionManager) {
   }
 
   function validateRecipient(message) {
-    if (!message.recipientId) {
-      return sendError(`Message is missing 'recipientId'.`)
-    }
-    if (message.recipientId === session.id) {
+    if (message.recipient.id === session.id) {
       return sendError(`Cannot send message to yourself.`)
     }
-    const recipient = sessionManager.getById(message.recipientId)
+    const recipient = sessionManager.getById(message.recipient.id)
     if (!recipient) {
-      return sendError(`Cannot send message, session ${recipientId} does not exist.`)
+      return sendError(`Cannot send message, session ${recipient.id} does not exist.`)
     }
     return recipient
   }
@@ -22,7 +19,7 @@ module.exports = function makeMessageHandler(session, sessionManager) {
   function validateMessage(message) {
     message = JSON.parse(message)
     const missing = []
-    const required = ['type', 'recipientId', 'data']
+    const required = ['type', 'recipient', 'data']
     required.forEach(prop => {
       if (!Object.keys(message).includes(prop)) {
         missing.push(prop)
@@ -46,39 +43,16 @@ module.exports = function makeMessageHandler(session, sessionManager) {
       }
       sessionManager.sendUserUpdate()
     },
-    offer: message => {
+    generic: message => {
       const recipient = validateRecipient(message)
       if (recipient) {
         recipient.sendObj({
-          type: 'offer',
-          senderId: session.id,
-          senderHandle: session.handle,
+          type: message.type,
+          sender: session.user,
           data: message.data
         })
       }
     },
-    answer: message => {
-      const recipient = validateRecipient(message)
-      if (recipient) {
-        recipient.sendObj({
-          type: 'answer',
-          senderId: session.id,
-          senderHandle: session.handle,
-          data: message.data
-        })
-      }
-    },
-    candidate: message => {
-      const recipient = validateRecipient(message)
-      if (recipient) {
-        recipient.sendObj({
-          type: 'candidate',
-          senderId: session.id,
-          senderHandle: session.handle,
-          data: message.data
-        })
-      }
-    }
   })
 
   return function messageHandler(rawMessage) {
@@ -90,7 +64,7 @@ module.exports = function makeMessageHandler(session, sessionManager) {
       return sendError(err.message)
     }
     console.log('Received:', message)
-    const handler = handlers[message.type]
+    const handler = handlers[message.type] || handlers.generic
     if (!handler) {
       console.log('Invalid message type')
       sendError(`Invalid message type ${message.type}`)

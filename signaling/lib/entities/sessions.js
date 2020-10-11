@@ -22,7 +22,7 @@ module.exports = function buildMakeSession (makeId) {
           return session.id
         },
         sendObj(obj) {
-          console.log('Sending to:', session.handle)
+          console.log('Sending to:', session.id)
           console.log(obj)
           return session.wsConn.send(JSON.stringify(obj))
         },
