@@ -5,9 +5,9 @@
         Not Connected Yet
       </md-card-header>
     </md-card>
-    <md-card v-if="rtcConnected">
+    <md-card v-if="connectedTo">
       <md-card-header>
-        <div class="md-title">Chat with {{connectedTo}}</div>
+        <div class="md-title">Chat with {{connectedTo.handle}}</div>
       </md-card-header>
       <md-card-content class="md-scrollbar">
         <md-list>
@@ -32,27 +32,45 @@ export default {
   name: 'Room',
   data: () => {
     return {
-      newMessage: ''
+      newMessage: '',
+      messages: {},
+      // _currentMessages: [],
+      me: {}
     }
   },
   computed: {
-    signalingConnected () {
-      return this.$rtc.signalingConnected
-    },
-    rtcConnected () {
-      return this.$rtc.connected
-    },
     connectedTo () {
       return this.$rtc.connectedTo
+    },
+    currentMessages () {
+      return this.messages[this.connectedTo.id]
     }
   },
   methods: {
-    // ...mapActions(['sendRTC']),
     sendMessage() {
-      // this.sendRTC(this.newMessage)
-      this.$rtc.send(this.newMessage)
+      this.$rtc.sendMessage(this.newMessage)
+      this.currentMessages.push({sender: 'me', message: this.newMessage})
+      this.messages = { ...this.messages }
       this.newMessage = ''
     }
+  },
+  mounted() {
+    this.$rtc.$on('message', message => {
+      this.currentMessages.push({sender: this.connectedTo.handle, message})
+      this.messages = { ...this.messages }
+    })
+    this.$rtc.$on('change', () => {
+      this.currentMessages = this.messages[this.connectedTo.id]
+    })
+    this.$rtc.$on('updateUsers', users => {
+      users.forEach(u => {
+        if (u.me) {
+          this.me = u
+        } else if (!this.messages[u.id]) {
+            this.messages[u.id] = []
+        }
+      })
+    })
   }
 }
 </script>

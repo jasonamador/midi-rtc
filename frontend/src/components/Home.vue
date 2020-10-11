@@ -3,7 +3,7 @@
     <h1>MIDI RTC</h1>
     <div class="md-layout md-gutter md-alignment-center-center">
       <div class="md-layout-item md-size-25">
-        <lobby></lobby>
+        <users></users>
       </div>
       <div class="md-layout-item md-size-70">
         <room></room>
@@ -28,14 +28,14 @@
 </template>
 <script>
 
-import Lobby from './Lobby'
+import Users from './Users'
 import Room from './Room'
 import Midi from './Midi'
 // import { mapActions } from 'vuex'
 export default {
   name: 'Home',
   components: {
-    Lobby,
+    Users,
     Midi,
     Room
   },
@@ -48,19 +48,24 @@ export default {
   computed: {
   },
   methods: {
-    // ...mapActions(['connectRTC']),
     notifyOffer(message) {
       this.showOffer = true
       this.offer = message
     },
     declineOffer() {
       this.showOffer = false
+      this.$rtc.decline()
     },
     acceptOffer() {
+      this.$rtc.sendOffer(this.offer.senderId)
       this.showOffer = false
     },
   },
   mounted() {
+    this.$rtc.$on('error', e => {
+      console.log(e)
+      this.$notify(e.message)
+    })
   }
 }
 </script>

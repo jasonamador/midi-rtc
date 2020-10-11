@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import App from './App.vue'
-// import VueNativeSock from 'vue-native-websocket'
+import Notifications from 'vue-notification'
 import store from './store'
 
 import 'vue-material/dist/vue-material.min.css'
@@ -14,6 +14,7 @@ Vue.use(MdTabs)
 Vue.use(MdField)
 Vue.use(MdList)
 Vue.use(MdTable)
+Vue.use(Notifications)
 
 // import {Signaling} from './plugins/signaling'
 // Vue.use(Signaling, process.env.VUE_APP_SIGNALING_URL)
