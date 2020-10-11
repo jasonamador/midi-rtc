@@ -48,14 +48,14 @@ export default {
   },
   methods: {
     sendMessage() {
-      this.$rtc.sendMessage(this.newMessage)
+      this.$rtc.sendText(this.newMessage)
       this.currentMessages.push({sender: 'me', message: this.newMessage})
       this.messages = { ...this.messages }
       this.newMessage = ''
     }
   },
   mounted() {
-    this.$rtc.$on('message', message => {
+    this.$rtc.$on('text', message => {
       this.currentMessages.push({sender: this.connectedTo.handle, message})
       this.messages = { ...this.messages }
     })

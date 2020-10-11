@@ -19,7 +19,7 @@
                   <md-table-head>State</md-table-head>
                   <md-table-head>Connection</md-table-head>
                 </md-table-row>
-                <md-table-row v-for="input of inputs" :key="input.id">
+                <md-table-row v-for="input of inputs" :key="input.id" @click="selectInput(input)">
                   <md-table-cell>{{input.id}}</md-table-cell>
                   <md-table-cell>{{input.name}}</md-table-cell>
                   <md-table-cell>{{input.manufacturer}}</md-table-cell>
@@ -65,6 +65,7 @@ export default {
       inputs: [],
       outputs: [],
       selectedOutput: null,
+      selectedInput: null,
       midiAccess: null
     }
   },
@@ -87,15 +88,26 @@ export default {
     selectOutput(output) {
       this.selectedOutput = output
     },
+    selectInput(input) {
+      input.onmidimessage = this.sendMidi
+      this.selectedInput = input
+    },
+    sendMidi(message) {
+      this.$rtc.sendMidi(message.data)
+    },
     playNote(note = 60) {
       const noteOnMessage = [0x90, note, 0x7f]    // note on, middle C, full velocity
       const output = this.selectedOutput;
       output.send(noteOnMessage);  //omitting the timestamp means send immediately.
       output.send([0x80, 60, 0x40], window.performance.now() + 1000.0 ); // Inlined array creation- note off, middle C,  
+    },
+    handleMidi(message) {
+      this.selectedOutput.send(new Uint8Array(message))
     }
   },
   mounted() {
     this.discoverMidi()
+    this.$rtc.$on('midi', this.handleMidi)
   }
 }
 </script>

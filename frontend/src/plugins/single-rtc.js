@@ -23,9 +23,13 @@ export const useSingleRTC = ({
           handle: 'none'
         },
         rtcState: 'none',
-        channelState: 'none',
+        channels: {
+          midiState: 'none',
+          textState: 'none',
+          midi: null,
+          text: null
+        },
         connectedTo: '',
-        channel: null
       }
     },
     computed: {},
@@ -33,13 +37,18 @@ export const useSingleRTC = ({
       sendSignal(message) {
         socket.send(JSON.stringify(message))
       },
-      sendMessage(message) {
-        this.channel.send(message)
+      sendText(message) {
+        this.channels.text.send(message)
+      },
+      sendMidi(message) {
+        this.channels.midi.send(message)
       },
       async sendOffer(recipient) {
         this.connectedTo = recipient
-        const outChannel = pc.createDataChannel('messenger')
-        this.initChannel(outChannel)
+        const textChannel = pc.createDataChannel('text')
+        const midiChannel = pc.createDataChannel('midi')
+        this.initChannel(textChannel)
+        this.initChannel(midiChannel)
         try {
           const offer = await pc.createOffer()
           await pc.setLocalDescription(offer)
@@ -132,13 +141,13 @@ export const useSingleRTC = ({
       },
       initChannel(channel) {
         channel.onopen = () => {
-          this.channelState = 'open'
+          this.$set(this.channels, channel.label + 'State', 'open')
         }
         channel.onclose = () => {
-          this.channelState = 'closed'
+          this.$set(this.channels, channel.label + 'State', 'closed')
         }
-        channel.onmessage = message => this.$emit('message', message.data)
-        this.channel = channel
+        channel.onmessage = message => this.$emit(channel.label, message.data)
+        this.$set(this.channels, channel.label, channel)
       },
     },
     created() {

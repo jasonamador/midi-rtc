@@ -14,10 +14,13 @@
               Id: {{me.id}}
             </md-list-item>
             <md-list-item>
-              Peer Connection: {{peerConnectionState}}
+              Peer Connection: {{rtcState}}
             </md-list-item>
             <md-list-item>
-              Data Channel: {{channelState}}
+              Text Data Channel: {{textState}}
+            </md-list-item>
+            <md-list-item>
+              MIDI Data Channel: {{midiState}}
             </md-list-item>
           </md-list>
         </div>
@@ -62,11 +65,14 @@ export default {
     notMe () {
       return this.users.filter(u => !u.me)
     },
-    peerConnectionState () {
+    rtcState () {
       return this.$rtc.rtcState
     },
-    channelState () {
-      return this.$rtc.channelState
+    textState () {
+      return this.$rtc.channels.textState
+    },
+    midiState () {
+      return this.$rtc.channels.midiState
     }
   },
   mounted () {
