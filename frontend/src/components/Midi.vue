@@ -19,12 +19,12 @@
                   <md-table-head>State</md-table-head>
                   <md-table-head>Connection</md-table-head>
                 </md-table-row>
-                <md-table-row v-for="input of inputs" :key="input.id" @click="selectInput(input)">
-                  <md-table-cell>{{input.id}}</md-table-cell>
-                  <md-table-cell>{{input.name}}</md-table-cell>
-                  <md-table-cell>{{input.manufacturer}}</md-table-cell>
-                  <md-table-cell>{{input.state}}</md-table-cell>
-                  <md-table-cell>{{input.connection}}</md-table-cell>
+                <md-table-row v-for="i of inputs" :key="i.id" @click="selectInput(i)" v-bind:class="{selectedMidi: i === input}" >
+                  <md-table-cell>{{i.id}}</md-table-cell>
+                  <md-table-cell>{{i.name}}</md-table-cell>
+                  <md-table-cell>{{i.manufacturer}}</md-table-cell>
+                  <md-table-cell>{{i.state}}</md-table-cell>
+                  <md-table-cell>{{i.connection}}</md-table-cell>
                 </md-table-row>
               </md-table>
             </md-content>
@@ -40,12 +40,12 @@
                   <md-table-head>State</md-table-head>
                   <md-table-head>Connection</md-table-head>
                 </md-table-row>
-                <md-table-row v-for="output of outputs" :key="output.id" @click="selectOutput(output)">
-                  <md-table-cell>{{output.id}}</md-table-cell>
-                  <md-table-cell>{{output.name}}</md-table-cell>
-                  <md-table-cell>{{output.manufacturer}}</md-table-cell>
-                  <md-table-cell>{{output.state}}</md-table-cell>
-                  <md-table-cell>{{output.connection}}</md-table-cell>
+                <md-table-row v-for="o of outputs" :key="o.id" @click="selectOutput(o)" v-bind:class="{selectedMidi: o === output}">
+                  <md-table-cell>{{o.id}}</md-table-cell>
+                  <md-table-cell>{{o.name}}</md-table-cell>
+                  <md-table-cell>{{o.manufacturer}}</md-table-cell>
+                  <md-table-cell>{{o.state}}</md-table-cell>
+                  <md-table-cell>{{o.connection}}</md-table-cell>
                 </md-table-row>
               </md-table>
             </md-content>
@@ -64,45 +64,48 @@ export default {
     return {
       inputs: [],
       outputs: [],
-      selectedOutput: null,
-      selectedInput: null,
+      output: null,
+      input: null,
       midiAccess: null
     }
   },
   components: {
   },
   methods: {
-    discoverMidi () {
-      const self = this
-      navigator.requestMIDIAccess().then(midi => {
-        self.midiAccess = midi
-        midi.inputs.forEach(input => {
-          self.inputs.push(input)
-          console.log(input)
-        })
-        midi.outputs.forEach(output => {
-          self.outputs.push(output)
-        })
+    async discoverMidi () {
+      this.midi = await navigator.requestMIDIAccess()
+      this.refreshMidi()
+      this.midi.onstatechange = this.refreshMidi
+    },
+    refreshMidi() {
+      this.inputs = []
+      this.outputs = []
+
+      this.midi.inputs.forEach(input => {
+        this.inputs.push(input)
+      })
+      this.midi.outputs.forEach(output => {
+        this.outputs.push(output)
       })
     },
     selectOutput(output) {
-      this.selectedOutput = output
+      this.output = output
     },
     selectInput(input) {
       input.onmidimessage = this.sendMidi
-      this.selectedInput = input
+      this.input = input
     },
     sendMidi(message) {
       this.$rtc.sendMidi(message.data)
     },
     playNote(note = 60) {
       const noteOnMessage = [0x90, note, 0x7f]    // note on, middle C, full velocity
-      const output = this.selectedOutput;
+      const output = this.output;
       output.send(noteOnMessage);  //omitting the timestamp means send immediately.
       output.send([0x80, 60, 0x40], window.performance.now() + 1000.0 ); // Inlined array creation- note off, middle C,  
     },
     handleMidi(message) {
-      this.selectedOutput.send(new Uint8Array(message))
+      this.output.send(new Uint8Array(message))
     }
   },
   mounted() {
@@ -114,6 +117,10 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.selectedMidi {
+  /* background-color: #999999; */
+  font-weight: bold;
+}
 h3 {
   margin: 40px 0 0;
 }
