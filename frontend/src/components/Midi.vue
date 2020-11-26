@@ -19,7 +19,7 @@
                   <md-table-head>State</md-table-head>
                   <md-table-head>Connection</md-table-head>
                 </md-table-row>
-                <md-table-row v-for="i of inputs" :key="i.id" @click="selectInput(i)" v-bind:class="{selectedMidi: i === input}" >
+                <md-table-row v-for="i of inputs" :key="i.id" @click="selectInput(i)" v-bind:class="{'md-elevation-6 bold': i === input}" >
                   <md-table-cell>{{i.id}}</md-table-cell>
                   <md-table-cell>{{i.name}}</md-table-cell>
                   <md-table-cell>{{i.manufacturer}}</md-table-cell>
@@ -40,7 +40,7 @@
                   <md-table-head>State</md-table-head>
                   <md-table-head>Connection</md-table-head>
                 </md-table-row>
-                <md-table-row v-for="o of outputs" :key="o.id" @click="selectOutput(o)" v-bind:class="{selectedMidi: o === output}">
+                <md-table-row v-for="o of outputs" :key="o.id" @click="selectOutput(o)" v-bind:class="{'md-elevation-6 bold': o === output}">
                   <md-table-cell>{{o.id}}</md-table-cell>
                   <md-table-cell>{{o.name}}</md-table-cell>
                   <md-table-cell>{{o.manufacturer}}</md-table-cell>
@@ -117,10 +117,6 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-.selectedMidi {
-  /* background-color: #999999; */
-  font-weight: bold;
-}
 h3 {
   margin: 40px 0 0;
 }

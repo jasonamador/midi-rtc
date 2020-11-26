@@ -36,8 +36,8 @@
       </md-card-header>
       <md-card-content>
         <md-list :md-expand-single="true">
-          <md-list-item v-for="user in notMe" :key="user.handle" @click="sendOffer(user)">
-            <span>{{user.handle}}</span>
+          <md-list-item v-for="user in notMe" :key="user.handle" @click="sendOffer(user)" v-bind:class="{'md-elevation-6 bold': user.id === selectedUser.id}">
+            {{user.handle}}
           </md-list-item>
         </md-list>
       </md-card-content>
@@ -73,6 +73,9 @@ export default {
     },
     midiState () {
       return this.$rtc.channels.midiState
+    },
+    selectedUser () {
+      return this.$rtc.connectedTo
     }
   },
   mounted () {
