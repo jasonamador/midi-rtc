@@ -1,94 +1,40 @@
-import SignalingEmitter from './lib/signal-emitter.js'
-import RTCClient from './lib/rtc-client.js'
+import ConnectionManager from './lib/connection-manager.js'
 
 const WS_URL = 'ws://localhost:9000'
 
 window.addEventListener('load', initialize)
 
-let signaling, me
-const conversations = {}
-const elements = {}
+const components = {}
+let connectionManager
 
 function initialize () {
-  signaling = new SignalingEmitter(WS_URL)
+  connectionManager = new ConnectionManager({ signalingUrl: WS_URL })
+  components.userList = document.getElementById('user-list')
+  components.chatWindow = document.getElementById('chat-window')
+  components.me = document.getElementById('me')
 
-  const userList = document.getElementById('user-list')
-  userList.addEventListener('clickUser', event => selectConversation(event.detail.user))
-  elements.userList = userList
+  components.userList.addEventListener('clickUser', event => selectConversation(event.detail.user))
+  components.chatWindow.addEventListener('sendMessage', event => sendMessage(event.detail))
 
-  elements.chatWindow = document.getElementById('chat-window')
-  elements.me = document.getElementById('me')
-  elements.chatWindow.addEventListener('sendMessage', event => sendMessage(event.detail))
-
-  signaling.on('updateUsers', message => {
-    me = message.data.find(u => u.me === true)
-    elements.me.innerHTML = me.handle
-    userList.update(message.data)
+  connectionManager.on('update:users', users => {
+    components.me.innerHTML = connectionManager.me.handle
+    components.userList.update(users)
   })
-  signaling.on('offer', handleOffer)
-  signaling.on('answer', handleAnswer)
-  signaling.on('candidate', handleCandidate)
+  connectionManager.on('update:conversation', peer => {
+    components.chatWindow.loadConversation(connectionManager.getConversation(peer))
+  })
 }
 
 async function sendMessage (message) {
-  const conversation = getConversation(message.recipient)
-  await conversation.rtc.sendText(message.text)
-  conversation.messages.push(message)
-  elements.chatWindow.loadConversation({ me, peer: message.recipient, messages: conversation.messages })
+  await connectionManager.sendTextMessage(message)
+  components.chatWindow.loadConversation(connectionManager.getConversation(message.recipient))
 }
 
 async function selectConversation (peer) {
-  const conversation = getConversation(peer)
-  if (conversation.rtc.connectionState !== 'connected') {
-    const offer = await conversation.rtc.createOffer()
-    await signaling.send({
-      type: 'offer',
-      data: offer,
-      recipient: peer
-    })
+  const connection = connectionManager.getConnection(peer)
+  if (connection.connectionState !== 'connected') {
+    await connectionManager.sendOffer(peer)
   }
-  elements.chatWindow.loadConversation({ me, peer, messages: conversation.messages })
+  components.chatWindow.loadConversation(connectionManager.getConversation(peer))
 }
 
-const getConversation = peer => {
-  if (!conversations[peer.handle]) {
-    const rtc = new RTCClient()
-    rtc.on('candidate', candidate => {
-      signaling.send({
-        type: 'candidate',
-        peer: peer,
-        data: candidate
-      })
-    })
-    rtc.on('message:text', text => {
-      conversations[peer.handle].messages.push({ sender: peer, text })
-      elements.chatWindow.loadConversation({ me, peer, messages: conversations[peer.handle].messages })
-    })
-    conversations[peer.handle] = {
-      rtc,
-      peer,
-      messages: []
-    }
-  }
-  return conversations[peer.handle]
-}
-
-const handleOffer = async message => {
-  const rtc = getConversation(message.sender).rtc
-  const answer = await rtc.createAnswer(message.data)
-  await signaling.send({
-    type: 'answer',
-    recipient: message.sender,
-    data: answer
-  })
-}
-
-const handleAnswer = async message => {
-  const rtc = getConversation(message.sender).rtc
-  await rtc.handleAnswer(message.data)
-}
-
-const handleCandidate = async message => {
-  const rtc = getConversation(message.sender).rtc
-  await rtc.addCandidate(message.data)
-}
