@@ -17,12 +17,12 @@ export default function SingleRTC (url = 'stun:stun.1.google.com:19302') {
   const emit = (eventName, payload) => eventTarget.dispatchEvent(new CustomEvent(eventName, { detail: payload }))
   const initChannel = channel => {
     channel.onopen = () => {
+      console.log('open', channel)
       channels[channel.label] = channel
     }
     channel.onclose = () => {
       channels[channel.label] = null
     }
-    channel.onmessage = message => emit(`message:${channel.label}`, message.data)
   }
 
   // PUBLIC
@@ -34,6 +34,9 @@ export default function SingleRTC (url = 'stun:stun.1.google.com:19302') {
     const midiChannel = peerConnection.createDataChannel('midi')
     initChannel(textChannel)
     initChannel(midiChannel)
+    textChannel.onmessage = message => emit('message:text', message.data)
+    // TODO: configure midi events
+    midiChannel.onmessage = message => console.log(message)
     const offer = await peerConnection.createOffer()
     await peerConnection.setLocalDescription(offer)
     return offer

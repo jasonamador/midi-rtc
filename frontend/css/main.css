@@ -2,7 +2,33 @@ body {
   margin: 0;
 }
 
-#users-list {
-  grid-area: users-list;
-  background-color: lightGreen;
+#grid-container {
+  display: grid;
+  grid-template-areas:
+    "header header header"
+    "user-list chat-window logger"
+    "user-list chat-window logger"
+    "midi-manager midi-manager midi-manager";
+  grid-template-columns: 1fr 3fr 1fr;
+  gap: 1em;
+}
+
+#container {
+  padding: 1em;
+}
+
+#user-list {
+  grid-area: user-list;
+}
+
+#chat-window {
+  grid-area: chat-window;
+}
+
+#midi-manager {
+  grid-area: midi-manager;
+}
+
+#logger {
+  grid-area: logger;
 }

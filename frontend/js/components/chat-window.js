@@ -7,34 +7,33 @@ customElements.define('chat-window', class ChatWindow extends HTMLElement {
     this.me = null
     this.messages = []
     const chatContainer = (peer, messages, me) => {
-      if (peer && me) {
-        return html`
-        <div id="container">
-          <h2>${peer ? peer.handle : 'nobody'}</h2>
-          <div id="messages">
-            <ul>
-            ${messages.map(entry => html`
-              <li class="message ${entry.sender.id === me.id ? 'fromMe' : 'fromPeer'}">
-                <p class="handle">${entry.sender.handle}</p>
-                <p>${entry.text}</p>
-              </li>`
-            )}
-            </ul>
-          </div>
+      return html`
+      <div id="container">
+        <h2>${peer ? `${peer.handle}` : 'No peer'}</h2>
+        <div id="messages">
+          <ul>
+          ${messages.map(entry => html`
+            <li class="message ${entry.sender.id === me.id ? 'fromMe' : 'fromPeer'}">
+              <p class="handle">${entry.sender.handle}</p>
+              <p>${entry.text}</p>
+            </li>`
+          )}
+          </ul>
+        </div>
         <div id="input-container">
           <input id="message-input"></input>
           <button id="send" @click=${e => this.sendMessage()}>SEND</button>
         </div>
       </div>`
-      }
-      return ''
     }
 
-    this.template = (peer, messages, me) => html`
+    const style = html`
       <style>
       #container {
-        padding: 2em;
+        padding: 1em;
+        border: 1px solid black;
       }
+
       ul {
         padding: 0;
         list-style: none;
@@ -56,7 +55,11 @@ customElements.define('chat-window', class ChatWindow extends HTMLElement {
       }
 
       </style>
+      `
+
+    this.template = (peer, messages, me) => html`
       ${chatContainer(peer, messages, me)}
+      ${style}
     `
     this.attachShadow({ mode: 'open' })
     this.render()

@@ -7,6 +7,7 @@ export default function ConnectionManager ({ signalingUrl, iceUrl }) {
   const emit = (eventName, payload) => eventTarget.dispatchEvent(new CustomEvent(eventName, { detail: payload }))
 
   const connections = {}
+
   this.me = null
   this.on = (eventName, handler) => eventTarget.addEventListener(eventName, event => handler(event.detail))
 
@@ -16,7 +17,7 @@ export default function ConnectionManager ({ signalingUrl, iceUrl }) {
   })
 
   signaling.on('offer', async message => {
-    const rtc = this.getConnection(message.sender)
+    const rtc = getConnection(message.sender).rtc
     const answer = await rtc.createAnswer(message.data)
     await signaling.send({
       type: 'answer',
@@ -26,12 +27,12 @@ export default function ConnectionManager ({ signalingUrl, iceUrl }) {
   })
 
   signaling.on('answer', async message => {
-    const rtc = this.getConnection(message.sender)
+    const rtc = getConnection(message.sender).rtc
     await rtc.handleAnswer(message.data)
   })
 
   signaling.on('candidate', async message => {
-    const rtc = this.getConnection(message.sender)
+    const rtc = getConnection(message.sender).rtc
     await rtc.addCandidate(message.data)
   })
 
@@ -45,8 +46,8 @@ export default function ConnectionManager ({ signalingUrl, iceUrl }) {
   }
 
   this.sendOffer = async peer => {
-    const connection = this.getConnection(peer)
-    const offer = await connection.createOffer()
+    const connection = getConnection(peer)
+    const offer = await connection.rtc.createOffer()
     await signaling.send({
       type: 'offer',
       data: offer,
@@ -54,20 +55,29 @@ export default function ConnectionManager ({ signalingUrl, iceUrl }) {
     })
   }
 
-  this.sendTextMessage = async message => {
-    const connection = this.getConnection(message.recipient)
-    connection.sendText(message.text)
-    addTextMessage(message)
+  this.sendText = async message => {
+    const connection = getConnection(message.recipient)
+    connection.rtc.sendText(message.text)
+    connection.messages.push({ sender: this.me, recipient: message.recipient, text: message.text })
   }
 
-  const addTextMessage = message => {
-    const conversation = this.getConversation(message.recipient)
-    conversation.messages.push({ sender: this.me, recipient: message.recipient, text: message.text })
+  this.sendMidi = async message => {
+    const connection = getConnection(message.recipient)
+    connection.rtc.sendMidi(message.text)
+    connection.messages.push({ sender: this.me, recipient: message.recipient, text: message.text })
   }
+
+  this.getSendMidi = peer => getConnection(peer).rtc.sendMidi
 
   const getConnection = peer => {
     if (!connections[peer.handle]) {
       const rtc = new RTCClient()
+      connections[peer.handle] = {
+        rtc,
+        peer,
+        messages: [],
+        midiHandler: message => console.log(message)
+      }
       rtc.on('candidate', candidate => {
         signaling.send({
           type: 'candidate',
@@ -75,18 +85,21 @@ export default function ConnectionManager ({ signalingUrl, iceUrl }) {
           data: candidate
         })
       })
+      // TODO: allow direct access to channels, too many middleman events
       rtc.on('message:text', text => {
+        console.log('message', text)
         connections[peer.handle].messages.push({ sender: peer, text })
         emit('update:conversation', peer)
       })
-      connections[peer.handle] = {
-        rtc,
-        peer,
-        messages: []
-      }
+      rtc.on('message:midi', connections[peer.handle].midiHandler)
     }
     return connections[peer.handle]
   }
 
-  this.getConnection = peer => getConnection(peer).rtc
+  this.setMidiHandler = (peer, handler) => {
+    const connection = getConnection(peer)
+    connection.midiHandler = handler
+  }
+
+  this.getRTC = peer => getConnection(peer).rtc
 }

@@ -3,19 +3,29 @@ import { html, render } from 'https://unpkg.com/lit-html?module'
 customElements.define('user-list', class UserList extends HTMLElement {
   constructor (users) {
     super()
-    this.users = users || ['a', 'b', 'c'].map(u => ({ handle: u }))
+    this.users = []
 
-    this.template = users => html`
+    const style = html`
       <style>
+      #container {
+        padding: 1em;
+        border: 1px solid black;
+      }
+
       ul {
         list-style: none;
+        padding: 0;
       }
-      </style>
-      <div id="user-list-wrapper">
+      </style>`
+
+    this.template = users => html`
+      <div id="container">
+        <h2>Users</h2>
         <ul>
           ${users.map(user => html`<li><a @click=${this.clicked(user)}>${user.handle}</a></li>`)}
         </ul>
       </div>
+      ${style}
     `
     this.attachShadow({ mode: 'open' })
     render(this.template(this.users), this.shadowRoot)
