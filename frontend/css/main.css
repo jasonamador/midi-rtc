@@ -1,0 +1,8 @@
+body {
+  margin: 0;
+}
+
+#users-list {
+  grid-area: users-list;
+  background-color: lightGreen;
+}
